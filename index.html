@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Rx Pharmacy Software</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="My Rx" />
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="brand-mark">Rx</div>
+      <h1>My Rx Pharmacy Software</h1>
+      <p class="muted">Offline pharmacy inventory, sales, purchases, reports, and backup.</p>
+      <form id="loginForm" class="login-form">
+        <label>Email</label>
+        <input id="loginEmail" type="email" placeholder="admin@example.com" required />
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="admin123" required />
+        <button type="submit" class="primary-btn full">Sign in</button>
+      </form>
+      <div class="demo-box">
+        <strong>Default login</strong><br />
+        Admin: admin@example.com / admin123<br />
+        Pharmacist: pharmacist@example.com / pharm123<br />
+        Cashier: cashier@example.com / cashier123
+      </div>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark small">Rx</div>
+        <div>
+          <h2>My Rx</h2>
+          <span>Pharmacy Suite</span>
+        </div>
+      </div>
+
+      <nav>
+        <button class="nav-link active" data-page="dashboard">Dashboard</button>
+        <button class="nav-link" data-page="inventory">Inventory</button>
+        <button class="nav-link" data-page="sales">Sales POS</button>
+        <button class="nav-link" data-page="purchases">Purchases</button>
+        <button class="nav-link" data-page="suppliers">Suppliers</button>
+        <button class="nav-link" data-page="reports">Reports</button>
+        <button class="nav-link admin-only" data-page="users">Users</button>
+        <button class="nav-link" data-page="backup">Backup</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p id="currentUserText"></p>
+        <button id="logoutBtn" class="ghost-btn full">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Business overview and alerts</p>
+        </div>
+        <div class="top-actions">
+          <button id="installBtn" class="secondary-btn hidden">Install App</button>
+          <span class="status-pill">Offline Ready</span>
+        </div>
+      </header>
+
+      <section id="dashboard" class="page active">
+        <div class="cards-grid">
+          <article class="stat-card">
+            <span>Total Medicines</span>
+            <strong id="dashTotalMedicines">0</strong>
+          </article>
+          <article class="stat-card warning">
+            <span>Low Stock</span>
+            <strong id="dashLowStock">0</strong>
+          </article>
+          <article class="stat-card danger">
+            <span>Expiring Soon</span>
+            <strong id="dashExpiring">0</strong>
+          </article>
+          <article class="stat-card success">
+            <span>Today's Sales</span>
+            <strong id="dashTodaySales">USh 0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Today's Profit</span>
+            <strong id="dashTodayProfit">USh 0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Stock Value</span>
+            <strong id="dashStockValue">USh 0</strong>
+          </article>
+        </div>
+
+        <div class="two-column">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Recent Sales</h2>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Receipt</th><th>Customer</th><th>Total</th><th>Date</th></tr>
+                </thead>
+                <tbody id="recentSalesTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Priority Alerts</h2>
+            </div>
+            <div id="alertsList" class="alerts-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="inventory" class="page">
+        <div class="panel">
+          <div class="panel-header split">
+            <div>
+              <h2>Medicine Inventory</h2>
+              <p>Manage stock, batch, supplier, expiry, buying and selling prices.</p>
+            </div>
+            <button id="addMedicineBtn" class="primary-btn pharmacist-admin-only">Add Medicine</button>
+          </div>
+          <div class="filters-row">
+            <input id="medicineSearch" placeholder="Search medicine, batch, category, supplier..." />
+            <select id="medicineStatusFilter">
+              <option value="all">All stock</option>
+              <option value="low">Low stock</option>
+              <option value="expiring">Expiring soon</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Medicine</th><th>Batch</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Buy</th><th>Sell</th><th>Expiry</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="medicineTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="sales" class="page">
+        <div class="two-column sales-layout">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>New Sale / Dispensing</h2>
+              <p>Add medicines to cart and complete sale. Stock reduces automatically.</p>
+            </div>
+            <div class="form-grid two">
+              <div>
+                <label>Customer / Patient Name</label>
+                <input id="saleCustomer" placeholder="Walk-in customer" />
+              </div>
+              <div>
+                <label>Payment Method</label>
+                <select id="salePaymentMethod">
+                  <option>Cash</option>
+                  <option>Mobile Money</option>
+                  <option>Card</option>
+                  <option>Credit</option>
+                </select>
+              </div>
+            </div>
+            <div class="sale-add-row">
+              <select id="saleMedicineSelect"></select>
+              <input id="saleQty" type="number" min="1" value="1" placeholder="Qty" />
+              <input id="saleDiscount" type="number" min="0" value="0" placeholder="Discount" />
+              <button id="addToCartBtn" class="secondary-btn">Add to Cart</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Medicine</th><th>Qty</th><th>Price</th><th>Discount</th><th>Total</th><th></th></tr>
+                </thead>
+                <tbody id="cartTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel checkout-panel">
+            <h2>Checkout</h2>
+            <div class="checkout-line"><span>Subtotal</span><strong id="cartSubtotal">USh 0</strong></div>
+            <div class="checkout-line"><span>Total Discount</span><strong id="cartDiscount">USh 0</strong></div>
+            <div class="checkout-line total"><span>Total</span><strong id="cartTotal">USh 0</strong></div>
+            <button id="completeSaleBtn" class="primary-btn full">Complete Sale</button>
+            <button id="clearCartBtn" class="ghost-btn full">Clear Cart</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="purchases" class="page">
+        <div class="two-column sales-layout">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Stock In / Purchases</h2>
+              <p>Record supplier purchases and increase stock automatically.</p>
+            </div>
+            <div class="form-grid two">
+              <div>
+                <label>Supplier</label>
+                <select id="purchaseSupplierSelect"></select>
+              </div>
+              <div>
+                <label>Invoice Number</label>
+                <input id="purchaseInvoice" placeholder="INV-001" />
+              </div>
+            </div>
+            <div class="sale-add-row">
+              <select id="purchaseMedicineSelect"></select>
+              <input id="purchaseQty" type="number" min="1" value="1" placeholder="Qty" />
+              <input id="purchaseCost" type="number" min="0" value="0" placeholder="Unit cost" />
+              <button id="addPurchaseLineBtn" class="secondary-btn">Add Line</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Medicine</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th></th></tr>
+                </thead>
+                <tbody id="purchaseLinesTable"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel checkout-panel">
+            <h2>Purchase Summary</h2>
+            <div class="checkout-line total"><span>Total Cost</span><strong id="purchaseTotal">USh 0</strong></div>
+            <button id="completePurchaseBtn" class="primary-btn full pharmacist-admin-only">Save Purchase</button>
+            <button id="clearPurchaseBtn" class="ghost-btn full">Clear Lines</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="suppliers" class="page">
+        <div class="panel">
+          <div class="panel-header split">
+            <div>
+              <h2>Suppliers</h2>
+              <p>Maintain supplier contacts for purchases and stock history.</p>
+            </div>
+            <button id="addSupplierBtn" class="primary-btn pharmacist-admin-only">Add Supplier</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="suppliersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="reports" class="page">
+        <div class="panel">
+          <div class="panel-header split">
+            <div>
+              <h2>Reports</h2>
+              <p>Daily sales, profit, low stock, expiry, and stock value reports.</p>
+            </div>
+            <button id="exportSalesCsvBtn" class="secondary-btn">Export Sales CSV</button>
+          </div>
+          <div class="filters-row">
+            <input id="reportDate" type="date" />
+            <button id="refreshReportsBtn" class="secondary-btn">Refresh</button>
+          </div>
+          <div class="cards-grid compact">
+            <article class="stat-card success"><span>Selected Day Sales</span><strong id="reportSalesTotal">USh 0</strong></article>
+            <article class="stat-card"><span>Selected Day Profit</span><strong id="reportProfitTotal">USh 0</strong></article>
+            <article class="stat-card warning"><span>Low Stock Items</span><strong id="reportLowStock">0</strong></article>
+            <article class="stat-card danger"><span>Expired Items</span><strong id="reportExpired">0</strong></article>
+          </div>
+          <div class="two-column">
+            <div>
+              <h3>Sales for selected day</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Receipt</th><th>Customer</th><th>Total</th><th>Profit</th><th>Time</th></tr></thead>
+                  <tbody id="reportSalesTable"></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <h3>Low Stock / Expiry</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Medicine</th><th>Qty</th><th>Expiry</th><th>Status</th></tr></thead>
+                  <tbody id="reportAlertsTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="users" class="page">
+        <div class="panel admin-only">
+          <div class="panel-header split">
+            <div>
+              <h2>Users & Roles</h2>
+              <p>Admin can manage local users for this offline installation.</p>
+            </div>
+            <button id="addUserBtn" class="primary-btn">Add User</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="backup" class="page">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Backup & Restore</h2>
+            <p>Export all offline data to JSON, or import a previous backup.</p>
+          </div>
+          <div class="backup-actions">
+            <button id="exportBackupBtn" class="primary-btn">Export Full Backup</button>
+            <label class="file-btn">
+              Import Backup
+              <input id="importBackupInput" type="file" accept="application/json" />
+            </label>
+          </div>
+          <div class="warning-box">
+            Importing a backup will add or update records in this browser/device. Keep backups safe because pharmacy business data is sensitive.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="medicineModal" class="modal hidden">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <h2 id="medicineModalTitle">Add Medicine</h2>
+        <button class="modal-close" data-close="medicineModal">×</button>
+      </div>
+      <form id="medicineForm" class="form-grid three">
+        <input type="hidden" id="medicineId" />
+        <div><label>Medicine Name</label><input id="medicineName" required /></div>
+        <div><label>Generic Name</label><input id="genericName" /></div>
+        <div><label>Category</label><input id="category" placeholder="Antibiotic, Painkiller..." /></div>
+        <div><label>Batch Number</label><input id="batchNo" required /></div>
+        <div><label>Supplier</label><select id="medicineSupplier"></select></div>
+        <div><label>Quantity</label><input id="quantity" type="number" min="0" required /></div>
+        <div><label>Buying Price</label><input id="buyingPrice" type="number" min="0" required /></div>
+        <div><label>Selling Price</label><input id="sellingPrice" type="number" min="0" required /></div>
+        <div><label>Reorder Level</label><input id="reorderLevel" type="number" min="0" value="5" required /></div>
+        <div><label>Expiry Date</label><input id="expiryDate" type="date" required /></div>
+        <div class="span-two"><label>Notes</label><input id="medicineNotes" /></div>
+        <div class="form-actions span-three">
+          <button type="button" class="ghost-btn" data-close="medicineModal">Cancel</button>
+          <button type="submit" class="primary-btn">Save Medicine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="supplierModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="supplierModalTitle">Add Supplier</h2>
+        <button class="modal-close" data-close="supplierModal">×</button>
+      </div>
+      <form id="supplierForm" class="form-grid one">
+        <input type="hidden" id="supplierId" />
+        <div><label>Supplier Name</label><input id="supplierName" required /></div>
+        <div><label>Phone</label><input id="supplierPhone" /></div>
+        <div><label>Email</label><input id="supplierEmail" type="email" /></div>
+        <div><label>Address</label><input id="supplierAddress" /></div>
+        <div class="form-actions">
+          <button type="button" class="ghost-btn" data-close="supplierModal">Cancel</button>
+          <button type="submit" class="primary-btn">Save Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="userModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="userModalTitle">Add User</h2>
+        <button class="modal-close" data-close="userModal">×</button>
+      </div>
+      <form id="userForm" class="form-grid one">
+        <input type="hidden" id="userId" />
+        <div><label>Full Name</label><input id="userName" required /></div>
+        <div><label>Email</label><input id="userEmail" type="email" required /></div>
+        <div><label>Role</label><select id="userRole"><option>Admin</option><option>Pharmacist</option><option>Cashier</option></select></div>
+        <div><label>Password</label><input id="userPassword" type="password" placeholder="Required for new user" /></div>
+        <div><label>Status</label><select id="userActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+        <div class="form-actions">
+          <button type="button" class="ghost-btn" data-close="userModal">Cancel</button>
+          <button type="submit" class="primary-btn">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="modal hidden">
+    <div class="modal-card receipt-card">
+      <div class="modal-header no-print">
+        <h2>Receipt</h2>
+        <button class="modal-close" data-close="receiptModal">×</button>
+      </div>
+      <div id="receiptContent" class="receipt-content"></div>
+      <div class="form-actions no-print">
+        <button type="button" class="ghost-btn" data-close="receiptModal">Close</button>
+        <button type="button" id="printReceiptBtn" class="primary-btn">Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./src/db.js"></script>
+  <script src="./src/app.js"></script>
+</body>
+</html>

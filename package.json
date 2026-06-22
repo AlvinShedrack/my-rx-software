@@ -1,0 +1,31 @@
+{
+  "name": "my-rx-software",
+  "version": "1.0.0",
+  "description": "Offline pharmacy inventory, sales, purchases, reports, and desktop installer software.",
+  "main": "electron/main.js",
+  "scripts": {
+    "serve": "serve .",
+    "start": "electron .",
+    "build-win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.mycompany.myrx",
+    "productName": "My Rx Pharmacy Software",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "index.html",
+      "manifest.webmanifest",
+      "sw.js",
+      "src/**/*",
+      "assets/**/*",
+      "electron/**/*"
+    ]
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
