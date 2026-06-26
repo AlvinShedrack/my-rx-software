@@ -14,13 +14,13 @@ let purchaseLines = [];
 let deferredInstallPrompt = null;
 
 const BRAND = {
-  name: "Budadiri People's Pharmacy",
-  tagline: "Your Health, Our Commitment",
-  receiptTagline: "Your Health, Our Priority.",
+  name: "Jericho First Aid Drug Shop",
+  tagline: "caring passionately for your health and drug needs",
+  receiptTagline: "Thank you for choosing Jericho First Aid Drug Shop.",
   logo: "./assets/budadiri-logo.png",
-  address: "Budadiri Town, Kibuku District, Uganda",
-  phone: "+256 700 123 456",
-  email: "info@budadiripharmacy.ug"
+  address: "Located at: Wagagai Hotel, Budadiri Town Council",
+  phone: "0704-180 237 / 0786-403 301",
+  email: ""
 };
 const pageMeta = {
   dashboard: ["Dashboard", "Business overview and alerts"],
@@ -40,6 +40,85 @@ function $(id) {
 function formatMoney(amount) {
   return "USh " + Number(amount || 0).toLocaleString("en-UG", {
     maximumFractionDigits: 0
+  });
+}
+
+function formatDateDisplay(dateString) {
+  if (!dateString) return "";
+  const raw = String(dateString).trim();
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) return raw;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [yyyy, mm, dd] = raw.split("-");
+    return `${dd}-${mm}-${yyyy}`;
+  }
+
+  const date = new Date(raw);
+  if (!Number.isNaN(date.getTime())) {
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  }
+
+  return raw;
+}
+
+function normalizeDateInput(value) {
+  if (!value) return "";
+
+  let input = String(value).trim().replaceAll("/", "-");
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    const [yyyy, mm, dd] = input.split("-");
+    return `${dd}-${mm}-${yyyy}`;
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(input)) {
+    return input;
+  }
+
+  const digits = input.replace(/\D/g, "");
+  if (digits.length === 8) {
+    const dd = digits.slice(0, 2);
+    const mm = digits.slice(2, 4);
+    const yyyy = digits.slice(4, 8);
+    return `${dd}-${mm}-${yyyy}`;
+  }
+
+  return input;
+}
+
+function toIsoDate(dateString) {
+  if (!dateString) return "";
+
+  const value = String(dateString).trim().replaceAll("/", "-");
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+    const [dd, mm, yyyy] = value.split("-");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return "";
+}
+
+function attachDateMask(id) {
+  const input = $(id);
+  if (!input) return;
+
+  input.addEventListener("input", event => {
+    let value = event.target.value.replace(/\D/g, "").slice(0, 8);
+
+    if (value.length > 4) {
+      value = `${value.slice(0, 2)}-${value.slice(2, 4)}-${value.slice(4)}`;
+    } else if (value.length > 2) {
+      value = `${value.slice(0, 2)}-${value.slice(2)}`;
+    }
+
+    event.target.value = value;
   });
 }
 
@@ -87,6 +166,18 @@ function requireRole(roles) {
   return currentUser && roles.includes(currentUser.role);
 }
 
+function isDispenser() {
+  return currentUser?.role === "Dispenser";
+}
+
+function isAdministrator() {
+  return currentUser?.role === "Administrator";
+}
+
+function isDirector() {
+  return currentUser?.role === "Director";
+}
+
 function supplierName(suppliers, id) {
   const supplier = suppliers.find(item => Number(item.id) === Number(id));
   return supplier ? supplier.name : "Not set";
@@ -96,26 +187,28 @@ async function seedInitialData() {
   const users = await getAll(STORE.users);
   if (!users.length) {
     await addRecord(STORE.users, {
-      name: "System Admin",
+      name: "System Administrator",
       email: "admin@example.com",
       passwordHash: simpleHash("admin123"),
-      role: "Admin",
+      role: "Administrator",
       isActive: true,
       createdAt: new Date().toISOString()
     });
+
     await addRecord(STORE.users, {
-      name: "Demo Pharmacist",
-      email: "pharmacist@example.com",
-      passwordHash: simpleHash("pharm123"),
-      role: "Pharmacist",
+      name: "Main Dispenser",
+      email: "dispenser@example.com",
+      passwordHash: simpleHash("disp123"),
+      role: "Dispenser",
       isActive: true,
       createdAt: new Date().toISOString()
     });
+
     await addRecord(STORE.users, {
-      name: "Demo Cashier",
-      email: "cashier@example.com",
-      passwordHash: simpleHash("cashier123"),
-      role: "Cashier",
+      name: "Director",
+      email: "director@example.com",
+      passwordHash: simpleHash("director123"),
+      role: "Director",
       isActive: true,
       createdAt: new Date().toISOString()
     });
@@ -186,21 +279,44 @@ function showApp() {
 }
 
 function applyRoleAccess() {
-  const isAdmin = currentUser?.role === "Admin";
-  const isPharmacistOrAdmin = ["Admin", "Pharmacist"].includes(currentUser?.role);
+  const adminOrDirector = ["Administrator", "Director"].includes(currentUser?.role);
+  const directorOnly = currentUser?.role === "Director";
 
   document.querySelectorAll(".admin-only").forEach(el => {
-    el.classList.toggle("hidden", !isAdmin);
+    el.classList.toggle("hidden", !adminOrDirector);
   });
 
-  document.querySelectorAll(".pharmacist-admin-only").forEach(el => {
-    el.classList.toggle("hidden", !isPharmacistOrAdmin);
+  document.querySelectorAll(".director-only").forEach(el => {
+    el.classList.toggle("hidden", !directorOnly);
   });
+
+  const saleType = $("saleType");
+  if (saleType) {
+    if (isDispenser()) {
+      saleType.value = "retail";
+      saleType.disabled = true;
+
+      Array.from(saleType.options).forEach(option => {
+        option.hidden = option.value !== "retail";
+      });
+    } else {
+      saleType.disabled = false;
+
+      Array.from(saleType.options).forEach(option => {
+        option.hidden = false;
+      });
+    }
+  }
+
+  const usersNav = document.querySelector('.nav-link[data-page="users"]');
+  if (usersNav) {
+    usersNav.classList.toggle("hidden", !adminOrDirector);
+  }
 }
 
 function showPage(pageId) {
-  if (pageId === "users" && !requireRole(["Admin"])) {
-    showToast("Only Admin can open Users.");
+  if (pageId === "users" && !requireRole(["Administrator", "Director"])) {
+    showToast("Only Administrator or Director can open Users.");
     return;
   }
 
@@ -305,7 +421,7 @@ async function renderInventory() {
     const d = daysUntil(med.expiryDate);
     const stockBadge = Number(med.quantity) <= Number(med.reorderLevel || 5) ? "warning" : "success";
     const expiryBadge = d < 0 ? "danger" : d <= 90 ? "warning" : "success";
-    const canEdit = requireRole(["Admin", "Pharmacist"]);
+    const canEdit = requireRole(["Administrator", "Director"]);
     return `
       <tr>
         <td><strong>${escapeHtml(med.name)}</strong><br><span class="muted">${escapeHtml(med.genericName || "")}</span></td>
@@ -316,7 +432,7 @@ async function renderInventory() {
         <td>${formatMoney(med.buyingPrice)}</td>
         <td>${formatMoney(med.sellingPrice)}</td>
         <td>${formatMoney(med.wholesalePrice)}</td>
-        <td><span class="badge ${expiryBadge}">${escapeHtml(med.expiryDate)}</span></td>
+        <td><span class="badge ${expiryBadge}">${escapeHtml(formatDateDisplay(med.expiryDate))}</span></td>
         <td>
           ${canEdit ? `<button class="table-btn" data-action="edit-medicine" data-id="${med.id}">Edit</button>` : ""}
           ${canEdit ? `<button class="table-btn danger" data-action="delete-medicine" data-id="${med.id}">Delete</button>` : ""}
@@ -381,7 +497,7 @@ async function openMedicineForm(id = null) {
 async function saveMedicine(event) {
   event.preventDefault();
 
-  if (!requireRole(["Admin", "Pharmacist"])) {
+  if (!requireRole(["Administrator", "Director"])) {
     showToast("Only Admin or Pharmacist can save medicines.");
     return;
   }
@@ -400,7 +516,7 @@ async function saveMedicine(event) {
     sellingPrice: Number($("sellingPrice").value || 0),
     wholesalePrice: Number($("wholesalePrice").value || 0),
     reorderLevel: Number($("reorderLevel").value || 5),
-    expiryDate: $("expiryDate").value,
+    expiryDate: normalizeDateInput($("expiryDate").value),
     notes: $("medicineNotes").value.trim(),
     updatedAt: new Date().toISOString()
   };
@@ -425,7 +541,7 @@ async function saveMedicine(event) {
 }
 
 async function deleteMedicine(id) {
-  if (!requireRole(["Admin", "Pharmacist"])) return showToast("Not allowed.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Not allowed.");
   const med = await getById(STORE.medicines, id);
   if (!med) return;
   if (!confirm(`Delete ${med.name}?`)) return;
@@ -437,7 +553,7 @@ async function deleteMedicine(id) {
 
 async function renderSuppliers() {
   const suppliers = await getAll(STORE.suppliers);
-  const canEdit = requireRole(["Admin", "Pharmacist"]);
+  const canEdit = requireRole(["Administrator", "Director"]);
 
   $("suppliersTable").innerHTML = suppliers.length ? suppliers.map(s => `
     <tr>
@@ -473,9 +589,38 @@ async function openSupplierForm(id = null) {
   openModal("supplierModal");
 }
 
+async function renderDashboardMedicineSearch() {
+  const medicines = await getAll(STORE.medicines);
+  const query = ($("dashMedicineSearch")?.value || "").toLowerCase().trim();
+
+  const filtered = medicines
+    .filter(med => {
+      const text = `${med.name} ${med.genericName} ${med.batchNo}`.toLowerCase();
+      return text.includes(query);
+    })
+    .slice(0, 10);
+
+  const container = $("dashboardPriceResults");
+  if (!container) return;
+
+  if (!query) {
+    container.innerHTML = `<div class="muted">Search a medicine name to see its prices.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.length ? filtered.map(med => `
+    <div class="price-search-item">
+      <strong>${escapeHtml(med.name)}</strong>
+      <div>Retail: ${formatMoney(med.sellingPrice)}</div>
+      <div>Wholesale: ${formatMoney(med.wholesalePrice)}</div>
+      <div>Available Qty: ${Number(med.quantity || 0)}</div>
+    </div>
+  `).join("") : `<div class="muted">No medicine found.</div>`;
+}
+
 async function saveSupplier(event) {
   event.preventDefault();
-  if (!requireRole(["Admin", "Pharmacist"])) return showToast("Not allowed.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Not allowed.");
 
   const id = $("supplierId").value;
   const existing = id ? await getById(STORE.suppliers, id) : null;
@@ -500,7 +645,7 @@ async function saveSupplier(event) {
 }
 
 async function deleteSupplier(id) {
-  if (!requireRole(["Admin", "Pharmacist"])) return showToast("Not allowed.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Not allowed.");
   const supplier = await getById(STORE.suppliers, id);
   if (!supplier) return;
   if (!confirm(`Delete supplier ${supplier.name}?`)) return;
@@ -585,6 +730,15 @@ async function completeSale() {
   const subtotal = cart.reduce((sum, item) => sum + (item.qty * item.sellingPrice), 0);
   const discount = cart.reduce((sum, item) => sum + item.discount, 0);
   const total = Math.max(0, subtotal - discount);
+
+  let amountPaid = Number(prompt(`Grand total is ${formatMoney(total)}.\nEnter amount paid by customer:`) || 0);
+
+  if (Number.isNaN(amountPaid) || amountPaid < total) {
+    return showToast("Amount paid must be equal to or greater than total.");
+  }
+
+  const changeGiven = amountPaid - total;
+
   const profit = cart.reduce((sum, item) => {
     const itemRevenue = Math.max(0, (item.qty * item.sellingPrice) - item.discount);
     const itemCost = item.qty * item.buyingPrice;
@@ -599,6 +753,7 @@ async function completeSale() {
   }
 
   const saleType = $("saleType")?.value || "retail";
+
   const sale = {
     receiptNo: `RX-${Date.now()}`,
     customerName: $("saleCustomer").value.trim() || "Walk-in customer",
@@ -609,6 +764,8 @@ async function completeSale() {
     subtotal,
     discount,
     total,
+    amountPaid,
+    changeGiven,
     profit,
     lines: cart.map(item => ({ ...item })),
     createdAt: new Date().toISOString()
@@ -616,13 +773,13 @@ async function completeSale() {
 
   const saleId = await addRecord(STORE.sales, sale);
   const savedSale = { ...sale, id: saleId };
-  await writeAudit("sale_completed", { receiptNo: sale.receiptNo, total });
+  await writeAudit("sale_completed", { receiptNo: sale.receiptNo, total, amountPaid, changeGiven });
 
   showReceipt(savedSale);
   cart = [];
   $("saleCustomer").value = "";
   renderCart();
-  showToast("Sale completed.");
+  showToast(`Sale completed. Change: ${formatMoney(changeGiven)}`);
   await refreshAll();
 }
 
@@ -630,6 +787,8 @@ function showReceipt(sale) {
   const subtotal = Number(sale.subtotal || sale.total || 0);
   const discount = Number(sale.discount || 0);
   const total = Number(sale.total || 0);
+  const amountPaid = Number(sale.amountPaid || 0);
+  const changeGiven = Number(sale.changeGiven || 0);
 
   $("receiptContent").innerHTML = `
     <img src="${BRAND.logo}" class="receipt-watermark" alt="" />
@@ -640,7 +799,8 @@ function showReceipt(sale) {
         <h2>${BRAND.name}</h2>
         <p>${BRAND.tagline}</p>
         <div class="receipt-contact-line">
-          ${BRAND.address} | ${BRAND.phone} | ${BRAND.email}
+          ${BRAND.address}<br>
+          Tel: ${BRAND.phone}
         </div>
       </div>
 
@@ -659,7 +819,7 @@ function showReceipt(sale) {
 
         <div>
           <strong>Date:</strong>
-          <span>${new Date(sale.createdAt).toLocaleDateString()}</span>
+          <span>${formatDateDisplay(sale.createdAt)}</span>
         </div>
 
         <div>
@@ -713,6 +873,16 @@ function showReceipt(sale) {
           <strong>${formatMoney(discount)}</strong>
         </div>
 
+        <div class="receipt-total-line">
+          <span>Amount Paid</span>
+          <strong>${formatMoney(amountPaid)}</strong>
+        </div>
+
+        <div class="receipt-total-line">
+          <span>Change</span>
+          <strong>${formatMoney(changeGiven)}</strong>
+        </div>
+
         <div class="receipt-total-line grand">
           <span>Grand Total</span>
           <strong>${formatMoney(total)}</strong>
@@ -720,8 +890,8 @@ function showReceipt(sale) {
       </div>
 
       <div class="receipt-footer-note">
-        Thank you for choosing ${BRAND.name}
-        <span>${BRAND.receiptTagline}</span>
+        ${BRAND.receiptTagline}
+        <span>${BRAND.address}</span>
       </div>
     </div>
   `;
@@ -745,7 +915,7 @@ function renderPurchaseLines() {
 }
 
 async function addPurchaseLine() {
-  if (!requireRole(["Admin", "Pharmacist"])) return showToast("Only Admin or Pharmacist can add purchases.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Only Admin or Pharmacist can add purchases.");
 
   const medicineId = Number($("purchaseMedicineSelect").value);
   const qty = Number($("purchaseQty").value || 0);
@@ -770,7 +940,7 @@ async function addPurchaseLine() {
 }
 
 async function completePurchase() {
-  if (!requireRole(["Admin", "Pharmacist"])) return showToast("Not allowed.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Not allowed.");
   if (!purchaseLines.length) return showToast("No purchase lines.");
 
   const supplierId = Number($("purchaseSupplierSelect").value);
@@ -860,7 +1030,7 @@ async function renderReports() {
       <tr>
         <td>${escapeHtml(med.name)}</td>
         <td>${med.quantity}</td>
-        <td>${escapeHtml(med.expiryDate)}</td>
+        <td>${escapeHtml(formatDateDisplay(med.expiryDate))}</td>
         <td><span class="badge ${badge}">${escapeHtml(status)}</span></td>
       </tr>
     `;
@@ -906,7 +1076,7 @@ async function exportPurchasesCsv() {
 }
 
 async function renderUsers() {
-  if (!requireRole(["Admin"])) return;
+  if (!requireRole(["Administrator", "Director"])) return;
   const users = await getAll(STORE.users);
   $("usersTable").innerHTML = users.map(user => `
     <tr>
@@ -923,7 +1093,7 @@ async function renderUsers() {
 }
 
 async function openUserForm(id = null) {
-  if (!requireRole(["Admin"])) return showToast("Only Admin can manage users.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Only Admin can manage users.");
   $("userForm").reset();
   $("userId").value = "";
 
@@ -947,7 +1117,7 @@ async function openUserForm(id = null) {
 
 async function saveUser(event) {
   event.preventDefault();
-  if (!requireRole(["Admin"])) return showToast("Only Admin can save users.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Only Admin can save users.");
 
   const id = $("userId").value;
   const existing = id ? await getById(STORE.users, id) : null;
@@ -976,7 +1146,7 @@ async function saveUser(event) {
 }
 
 async function deleteUser(id) {
-  if (!requireRole(["Admin"])) return showToast("Only Admin can delete users.");
+  if (!requireRole(["Administrator", "Director"])) return showToast("Only Admin can delete users.");
   if (Number(id) === Number(currentUser.id)) return showToast("You cannot delete your own user while logged in.");
 
   const user = await getById(STORE.users, id);
@@ -1903,7 +2073,7 @@ async function buildReportsPageReport() {
 }
 
 async function buildUsersReport() {
-  if (!requireRole(["Admin"])) {
+  if (!requireRole(["Administrator", "Director"])) {
     return reportShell(
       "Users Report",
       "Access restricted.",
@@ -2079,6 +2249,7 @@ async function refreshAll() {
   await renderSuppliers();
   await renderUsers();
   await renderReports();
+  await renderDashboardMedicineSearch();
   renderCart();
   renderPurchaseLines();
 }
@@ -2245,6 +2416,8 @@ function bindEvents() {
     if (action === "delete-user") deleteUser(id);
   });
 
+  safeOn("dashMedicineSearch", "input", renderDashboardMedicineSearch);
+
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredInstallPrompt = event;
@@ -2256,6 +2429,9 @@ async function init() {
   await dbReady;
   await seedInitialData();
   bindEvents();
+
+  attachDateMask("expiryDate");
+  attachDateMask("reportDate");
 
   if ($("reportDate")) {
     $("reportDate").value = todayISO();

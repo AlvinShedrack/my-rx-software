@@ -2224,3 +2224,141 @@ body.is-authenticated #loginScreen {
     display: block !important;
   }
 }
+
+/* =========================================
+   MOBILE HEADER LIKE THE SECOND IMAGE
+========================================= */
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1200 !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .logo-sidebar-card {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 74px !important;
+    margin: 0 !important;
+    padding: 14px 18px !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+  }
+
+  .logo-sidebar-card::after {
+    content: "☰";
+    font-size: 28px;
+    color: #475569;
+    font-weight: 700;
+  }
+
+  .sidebar-logo {
+    width: 170px !important;
+    max-width: 170px !important;
+    height: auto !important;
+    max-height: 48px !important;
+    object-fit: contain !important;
+    margin: 0 !important;
+  }
+
+  .logo-sidebar-card span {
+    display: none !important;
+  }
+
+  .sidebar nav {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .sidebar nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nav-link {
+    flex: 0 0 auto !important;
+    border-radius: 999px !important;
+    margin-bottom: 0 !important;
+    padding: 10px 14px !important;
+    min-height: 44px !important;
+  }
+
+  .main-content,
+  .main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 16px 12px 24px !important;
+  }
+
+  .topbar {
+    display: none !important;
+  }
+
+  .page {
+    scroll-margin-top: 150px;
+  }
+
+  /* prevent first field being hidden under sticky header */
+  .panel,
+  .card,
+  .form,
+  .page > *:first-child {
+    scroll-margin-top: 160px;
+  }
+
+  .inventory-form,
+  .form-grid,
+  form {
+    margin-top: 8px !important;
+  }
+}
+
+/* search on dashboard */
+.dashboard-price-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.price-search-item {
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.price-search-item strong {
+  display: block;
+  color: #0057b8;
+  margin-bottom: 6px;
+}
+
+/* Manual date fields */
+input[placeholder="DD-MM-YYYY"] {
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  #inventory {
+    padding-top: 8px !important;
+  }
+
+  #inventory form {
+    margin-top: 12px !important;
+  }
+}

@@ -125,7 +125,7 @@ async function bulkPut(storeName, records = []) {
 async function exportAllData() {
   const output = {
     exportedAt: new Date().toISOString(),
-    app: "Budadiri People's Pharmacy",
+    app: "Jericho First Aid Drug Shop",
     version: "1.0.1",
     data: {}
   };
