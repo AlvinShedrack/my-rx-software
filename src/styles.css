@@ -2503,3 +2503,60 @@ input[placeholder="DD-MM-YYYY"] {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   z-index: 999;
 }
+
+/* =========================================
+   FIX CURRENT USER + LOGOUT ON MOBILE MENU
+========================================= */
+
+.mobile-user-card {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.mobile-user-card p {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mobile-user-card .ghost-btn {
+  background: #ffffff !important;
+  color: #0057b8 !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+/* Do not hide user/logout on mobile */
+.sidebar-footer,
+.mobile-user-card {
+  display: block !important;
+}
+
+@media (max-width: 768px) {
+  .sidebar.mobile-menu-open nav {
+    max-height: 780px !important;
+    overflow-y: auto !important;
+  }
+
+  .mobile-user-card {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .mobile-user-card p {
+    color: #0f172a !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+  }
+
+  .mobile-user-card .ghost-btn {
+    width: 100% !important;
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+  }
+}
