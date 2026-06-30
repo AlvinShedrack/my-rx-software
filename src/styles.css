@@ -2673,3 +2673,94 @@ body.is-authenticated .floating-sync-btn {
     transform: translateY(0) !important;
   }
 }
+
+/* =========================================
+   MOBILE FIX: ADD MEDICINE FORM NOT HIDDEN
+   Paste at the very bottom of styles.css
+========================================= */
+
+@media (max-width: 768px) {
+
+  /* Put modal above the mobile header */
+  .modal {
+    z-index: 9999 !important;
+    align-items: flex-start !important;
+    justify-items: center !important;
+    place-items: start center !important;
+    padding: 12px !important;
+    padding-top: calc(14px + env(safe-area-inset-top)) !important;
+    overflow-y: auto !important;
+  }
+
+  /* Make the modal fit inside the phone screen */
+  .modal-card,
+  .modal-card.large {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 28px) !important;
+    overflow-y: auto !important;
+    margin: 0 auto !important;
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  /* Keep modal title and close button visible while scrolling */
+  .modal-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    background: #ffffff !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Add Medicine form becomes one column on mobile */
+  #medicineForm.form-grid.three {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  #medicineForm .span-two,
+  #medicineForm .span-three {
+    grid-column: span 1 !important;
+  }
+
+  /* Make the first field easy to see and tap */
+  #medicineName {
+    scroll-margin-top: 90px !important;
+  }
+
+  /* Buttons full width on mobile */
+  #medicineForm .form-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  #medicineForm .form-actions button {
+    width: 100% !important;
+  }
+}
+
+/* MOBILE FIX: center floating sync button text */
+@media (max-width: 768px) {
+  body.is-authenticated .floating-sync-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+    height: 36px !important;
+    min-width: 64px !important;
+    padding: 0 14px !important;
+
+    line-height: 1 !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+
+  body.is-authenticated .floating-sync-btn * {
+    line-height: 1 !important;
+  }
+}

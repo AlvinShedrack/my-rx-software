@@ -521,6 +521,14 @@ async function openMedicineForm(id = null) {
   }
 
   openModal("medicineModal");
+
+  setTimeout(() => {
+  const firstField = $("medicineName");
+  if (firstField) {
+    firstField.scrollIntoView({ block: "start", behavior: "smooth" });
+    firstField.focus();
+  }
+}, 100);
 }
 
 async function saveMedicine(event) {
