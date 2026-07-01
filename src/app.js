@@ -582,15 +582,29 @@ async function saveMedicine(event) {
 
 async function deleteMedicine(id) {
   if (!requireRole(["Administrator", "Director"])) return showToast("Not allowed.");
+
   const med = await getById(STORE.medicines, id);
   if (!med) return;
+
   if (!confirm(`Delete ${med.name}?`)) return;
-  await deleteRecord(STORE.medicines, id);
-  await writeAudit("medicine_deleted", { id, name: med.name });
-  showToast("Medicine deleted.");
-  await refreshAll();
-  if (typeof queueAutoSync === "function") {
-    queueAutoSync();
+
+  try {
+    if (navigator.onLine && typeof markCloudRecordDeleted === "function") {
+      await markCloudRecordDeleted(STORE.medicines, id);
+    }
+
+    await deleteRecord(STORE.medicines, id);
+    await writeAudit("medicine_deleted", { id, name: med.name });
+
+    showToast("Medicine deleted.");
+    await refreshAll();
+
+    if (typeof queueAutoSync === "function") {
+      queueAutoSync();
+    }
+  } catch (error) {
+    console.error("Delete medicine sync error:", error);
+    showToast(error.message || "Medicine delete failed.");
   }
 }
 
@@ -692,15 +706,29 @@ async function saveSupplier(event) {
 
 async function deleteSupplier(id) {
   if (!requireRole(["Administrator", "Director"])) return showToast("Not allowed.");
+
   const supplier = await getById(STORE.suppliers, id);
   if (!supplier) return;
+
   if (!confirm(`Delete supplier ${supplier.name}?`)) return;
-  await deleteRecord(STORE.suppliers, id);
-  await writeAudit("supplier_deleted", { id, name: supplier.name });
-  showToast("Supplier deleted.");
-  await refreshAll();
-  if (typeof queueAutoSync === "function") {
-    queueAutoSync();
+
+  try {
+    if (navigator.onLine && typeof markCloudRecordDeleted === "function") {
+      await markCloudRecordDeleted(STORE.suppliers, id);
+    }
+
+    await deleteRecord(STORE.suppliers, id);
+    await writeAudit("supplier_deleted", { id, name: supplier.name });
+
+    showToast("Supplier deleted.");
+    await refreshAll();
+
+    if (typeof queueAutoSync === "function") {
+      queueAutoSync();
+    }
+  } catch (error) {
+    console.error("Delete supplier sync error:", error);
+    showToast(error.message || "Supplier delete failed.");
   }
 }
 
@@ -1215,13 +1243,26 @@ async function deleteUser(id) {
 
   const user = await getById(STORE.users, id);
   if (!user) return;
+
   if (!confirm(`Delete user ${user.name}?`)) return;
-  await deleteRecord(STORE.users, id);
-  await writeAudit("user_deleted", { id, email: user.email });
-  showToast("User deleted.");
-  await refreshAll();
-  if (typeof queueAutoSync === "function") {
-    queueAutoSync();
+
+  try {
+    if (navigator.onLine && typeof markCloudRecordDeleted === "function") {
+      await markCloudRecordDeleted(STORE.users, id);
+    }
+
+    await deleteRecord(STORE.users, id);
+    await writeAudit("user_deleted", { id, email: user.email });
+
+    showToast("User deleted.");
+    await refreshAll();
+
+    if (typeof queueAutoSync === "function") {
+      queueAutoSync();
+    }
+  } catch (error) {
+    console.error("Delete user sync error:", error);
+    showToast(error.message || "User delete failed.");
   }
 }
 

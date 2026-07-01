@@ -79,7 +79,32 @@ function prepareRecordForCloud(storeName, record) {
     deleted: false
   };
 }
+async function markCloudRecordDeleted(storeName, id) {
+  const now = new Date().toISOString();
 
+  const deletedRow = {
+    store_name: storeName,
+    local_id: String(id),
+    device_id: getDeviceId(),
+    data: {
+      id: Number(id),
+      deletedAt: now,
+      updatedAt: now
+    },
+    updated_at: now,
+    deleted: true
+  };
+
+  const { error } = await cloudClient
+    .from("cloud_records")
+    .upsert([deletedRow], {
+      onConflict: "store_name,local_id"
+    });
+
+  if (error) {
+    throw error;
+  }
+}
 async function pullCloudStoreToLocal(storeName) {
   const { data, error } = await cloudClient
     .from("cloud_records")
@@ -94,7 +119,11 @@ async function pullCloudStoreToLocal(storeName) {
   let imported = 0;
 
   for (const row of data || []) {
-    if (row.deleted) continue;
+    if (row.deleted) {
+      await deleteRecord(storeName, row.local_id);
+      imported++;
+      continue;
+    }
     if (!row.data) continue;
 
     const cloudRecord = {
